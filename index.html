@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kalkulator Babi Ngepet v2</title>
+<meta name="theme-color" content="#0e141b">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Babi Ngepet v2">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="icon" href="icon-192.png" sizes="192x192" type="image/png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<style>
+:root{--bg:#0e141b;--sf:#161f29;--ink:#e6edf3;--mu:#92a1b2;--ln:#28343f;--ac:#6cc4e8;--ac2:#143040;--loss:#ff7b72;--win:#4cc38a;color-scheme:dark}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 "Segoe UI",system-ui,-apple-system,Roboto,sans-serif}
+.wrap{max-width:1180px;margin:0 auto;padding:1.25rem 1rem 3rem}
+h1{font-size:1.7rem;line-height:1.2;margin:0 0 .3rem;letter-spacing:-.015em}
+header p{margin:0 0 1.25rem;color:var(--mu);max-width:70ch}
+.grid{display:grid;gap:1.25rem;grid-template-columns:330px minmax(0,1fr);align-items:start}
+@media(max-width:900px){.grid{grid-template-columns:1fr}}
+aside{background:var(--sf);border:1px solid var(--ln);border-radius:10px;padding:1rem 1.1rem}
+@media(min-width:901px){aside{position:sticky;top:1rem;max-height:calc(100vh - 2rem);overflow:auto}}
+fieldset{border:0;margin:0 0 1rem;padding:0}
+legend{font-weight:650;padding:0;margin-bottom:.2rem}
+label{display:block;font-size:.85rem;color:var(--mu);margin:.5rem 0 .15rem}
+input,select,textarea{width:100%;padding:.45rem .55rem;border:1px solid var(--ln);border-radius:6px;font:inherit;color:var(--ink);background:var(--bg);font-variant-numeric:tabular-nums}
+:focus-visible{outline:2px solid var(--ac);outline-offset:1px}
+#rst{width:100%;padding:.5rem;border:1px solid var(--ac);background:transparent;color:var(--ac);border-radius:6px;font:inherit;font-weight:600;cursor:pointer}
+#rst:hover{background:var(--ac2)}
+.kpi{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1px;background:var(--ln);border:1px solid var(--ln);border-radius:10px;overflow:hidden;margin:0 0 1rem}
+.kpi>div{background:var(--sf);padding:.9rem 1.1rem}
+.kpi span{display:block;font-size:.85rem;color:var(--mu)}
+.kpi strong{display:block;font-size:1.4rem;line-height:1.3;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.kpi small{color:var(--mu);font-size:.8rem}
+.tw{overflow-x:auto;background:var(--sf);border:1px solid var(--ln);border-radius:10px}
+table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums;font-size:.9rem}
+th,td{padding:.5rem .75rem;text-align:right;white-space:nowrap;border-bottom:1px solid var(--ln)}
+th:first-child,td:first-child{text-align:left}
+th{font-weight:600;color:var(--mu);background:#1b2530}
+tr:last-child td{border-bottom:0}
+.l{color:var(--loss)}.w{color:var(--win)}
+td.bar{background:linear-gradient(90deg,rgba(255,123,114,.22) var(--w),transparent var(--w))}
+.warn,#err{border-radius:8px;padding:.6rem .9rem;margin:0 0 1rem}
+.warn{background:#34290f;border:1px solid #6b5521}
+.warn ul{margin:0;padding-left:1.1rem}
+#err{background:#3a1a18;border:1px solid #7a2d28;color:#ffb4ae}
+p.f{margin:.75rem 0 0;color:var(--mu);font-size:.88rem}
+details{margin-top:1.25rem;color:var(--mu);font-size:.9rem}
+summary{cursor:pointer;color:var(--ink);font-weight:600}
+details li{margin:.3rem 0}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+<h1>Kalkulator Babi Ngepet v2</h1>
+<p>Hitung total realized loss, drawdown, dan profit dari strategi martingale EA Babi Ngepet v2.0. Isi parameter yang sama dengan input EA, hasilnya langsung dihitung di browser.</p>
+</header>
+<div class="grid">
+<aside id="cfg" aria-label="Pengaturan"><button id="rst" type="button">Kembalikan ke default EA</button></aside>
+<main>
+<div id="err" role="alert" hidden></div>
+<section id="p1"></section>
+<details>
+<summary>Cara hitung dan asumsi</summary>
+<ul>
+<li>EA memasang TP dan SL dari harga open aktual, jadi hasil tiap trade tetap: lot × pips × nilai pip. Spread tidak mengubah hasil. Komisi, slippage, swap, dan gap tidak dihitung.</li>
+<li>Setelah loss, lot berikutnya = lot sebelumnya × pengali, dibulatkan ke step dan dibatasi MaxLotLimit. Setelah TP, lot kembali ke lot awal.</li>
+<li>Saat loss beruntun mencapai batas, EA pause sampai hari berikutnya lalu lot kembali ke lot awal.</li>
+<li>Drawdown dihitung dari puncak ekuitas (harga nyaris TP) sampai SL terakhir kena.</li>
+<li>Instrumen XAUUSD dengan nilai 1 pip per 1 lot dianggap 1 USC (akun cent). Pada akun standard, angka dibagi 100 dan ditampilkan dalam USD.</li>
+</ul>
+</details>
+</main>
+</div>
+</div>
+<script>
+const $=id=>document.getElementById(id);
+const nf=(x,d=2)=>x.toLocaleString('id-ID',{minimumFractionDigits:d,maximumFractionDigits:d});
+const money=x=>(x<0?'−':'')+nf(Math.abs(x));
+const lotf=x=>x.toLocaleString('id-ID',{minimumFractionDigits:2,maximumFractionDigits:3});
+const C='<span class="cur"></span>';
+const G=[
+['Instrumen dan akun',[
+ ['acct','Jenis akun','s',[['cent','Cent (USC)'],['std','Standard (USD)']]],
+ ['bal','Saldo awal ('+C+')',50000]]],
+['Lot',[
+ ['lot','Lot awal (InitialLot)',0.01],
+ ['mult','Pengali lot (LotMultiplier)',2],
+ ['mxl','Batas lot (MaxLotLimit, 0 = bebas)',0],
+ ['mcl','Loss beruntun maks (MaxConsecutiveLoss, 0 = nonaktif)',14],
+ ['stp','Lot minimum dan step broker',0.01]]],
+['TP dan SL',[
+ ['tp','Take profit, pips (TakeProfitPips)',350],
+ ['sl','Stop loss, pips (StopLossPips)',250]]]
+];
+$('cfg').insertAdjacentHTML('afterbegin',G.map(g=>`<fieldset><legend>${g[0]}</legend>${g[1].map(f=>`<label for="${f[0]}">${f[1]}</label>`+(f[2]==='s'?`<select id="${f[0]}">${f[3].map(o=>`<option value="${o[0]}">${o[1]}</option>`).join('')}</select>`:`<input id="${f[0]}" type="number" inputmode="decimal" step="any" min="0" value="${f[2]}">`)).join('')}</fieldset>`).join(''));
+
+function read(){
+ const p={},e=[];
+ G.forEach(g=>g[1].forEach(f=>{const el=$(f[0]);p[f[0]]=f[2]==='s'?el.value:parseFloat(el.value)}));
+ ['bal','lot','mult','mxl','mcl','stp','tp','sl'].forEach(k=>{if(!isFinite(p[k])||p[k]<0)e.push('Isi angka yang valid (tidak negatif) pada semua kolom.')});
+ p.pv=p.acct==='cent'?1:0.01;
+ if(!e.length){
+  if(p.lot<=0)e.push('Lot awal harus lebih dari 0.');
+  if(p.mult<1)e.push('Pengali lot harus 1 atau lebih, sama seperti validasi EA.');
+  if(p.tp<=0||p.sl<=0)e.push('TP dan SL harus lebih dari 0 pips.');
+  if(p.bal<=0||p.stp<=0)e.push('Saldo dan lot step harus lebih dari 0.');
+ }
+ return {p,e:[...new Set(e)]};
+}
+// Sama seperti NormalizeLot di EA: batas lot, bulatkan ke step, minimal 1 step.
+function nl(x,p){if(p.mxl>0&&x>p.mxl)x=p.mxl;const s=p.stp;x=Math.round(x/s)*s;if(x<s)x=s;return +x.toFixed(8)}
+
+function ladder(p){
+ const n=p.mcl>0?p.mcl:10;let lot=nl(p.lot,p),cum=0,pk=0;const rows=[];
+ for(let k=1;k<=n;k++){
+  const loss=lot*p.sl*p.pv,prof=lot*p.tp*p.pv,prev=cum;
+  cum+=loss;pk=Math.max(pk,prof-prev);
+  rows.push({k,lot,loss,cum,prof,net:prof-prev});
+  lot=nl(lot*p.mult,p);
+ }
+ return {rows,dd:pk+cum,next:lot};
+}
+const kpi=a=>`<div class="kpi">${a.map(x=>`<div><span>${x[0]}</span><strong class="${x[3]||''}">${x[1]}</strong><small>${x[2]}</small></div>`).join('')}</div>`;
+
+function view1(p){
+ const L=ladder(p),r=L.rows,n=r.length,last=r[n-1],c=' '+p.cur,pct=x=>nf(x/p.bal*100,1)+'% dari saldo';
+ const W=[];
+ const k=r.findIndex(x=>x.cum>=p.bal);
+ if(k>=0)W.push(`Saldo habis di trade ke-${k+1}: total loss ${nf(r[k].cum)} sudah melewati saldo ${nf(p.bal)}.`);
+ if(p.mcl<=0)W.push('Loss beruntun maks nonaktif: hanya 10 trade pertama yang ditampilkan, risiko sebenarnya tidak terbatas.');
+ let h=W.length?`<div class="warn"><ul>${W.map(x=>`<li>${x}</li>`).join('')}</ul></div>`:'';
+ h+=kpi([
+  ['Total realized loss',money(-last.cum)+c,`${n} loss beruntun · ${pct(last.cum)}`,'l'],
+  ['Drawdown maksimum',nf(L.dd)+c,`${pct(L.dd)} · puncak ekuitas sampai SL ke-${n}`,'l'],
+  ['Profit per TP',(r[0].prof<0?'−':'+')+nf(Math.abs(r[0].prof))+c,`TP di trade ke-${n}, setelah menutup loss sebelumnya: ${money(last.net)}`,'w']
+ ]);
+ h+=`<div class="tw"><table><thead><tr><th>Trade ke-</th><th>Lot</th><th>Loss trade ini</th><th>Total realized loss</th><th>% saldo</th><th>Profit jika TP</th><th>Net setelah TP</th></tr></thead><tbody>`+
+  r.map(x=>`<tr><td>${x.k}</td><td>${lotf(x.lot)}</td><td class="l">${money(-x.loss)}</td><td class="bar" style="--w:${(x.cum/last.cum*100).toFixed(1)}%"><span class="l">${money(-x.cum)}</span></td><td>${nf(x.cum/p.bal*100,1)}%</td><td class="${x.prof>=0?'w':'l'}">${x.prof>=0?'+':''}${money(x.prof)}</td><td class="${x.net>=0?'w':'l'}">${x.net>=0?'+':''}${money(x.net)}</td></tr>`).join('')+`</tbody></table></div>`;
+ if(p.mcl>0){
+  h+=`<p class="f">Setelah loss ke-${n}, EA pause sampai hari berikutnya lalu kembali ke lot awal; lot ke-${n+1} sebesar ${lotf(L.next)} tidak pernah dibuka.</p>`;
+ }
+ return h;
+}
+function render(){
+ const cur=$('acct').value==='cent'?'USC':'USD';
+ document.querySelectorAll('.cur').forEach(e=>e.textContent=cur);
+ const {p,e}=read(),er=$('err');
+ er.hidden=!e.length;er.innerHTML=e.join('<br>');
+ if(e.length){$('p1').innerHTML='';return}
+ p.cur=cur;$('p1').innerHTML=view1(p);
+}
+let last='cent';
+$('cfg').addEventListener('input',render);
+$('acct').addEventListener('change',()=>{const a=$('acct').value;if(a!==last){const b=parseFloat($('bal').value);if(isFinite(b))$('bal').value=+(a==='std'?b/100:b*100).toFixed(2);last=a}render()});
+$('rst').onclick=()=>{G.forEach(g=>g[1].forEach(f=>{const el=$(f[0]);if(f[2]==='s')el.selectedIndex=0;else el.value=f[2]}));last='cent';render()};
+render();
+if('serviceWorker' in navigator){
+ const had=!!navigator.serviceWorker.controller;let rl=false;
+ navigator.serviceWorker.addEventListener('controllerchange',()=>{if(had&&!rl){rl=true;location.reload()}});
+ navigator.serviceWorker.register('./sw.js').then(r=>r.update()).catch(()=>{});
+}
+</script>
+</body>
+</html>
